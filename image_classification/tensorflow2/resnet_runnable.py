@@ -137,7 +137,8 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
       self.one_hot = True
 
     if flags_obj.report_accuracy_metrics:
-      self.train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
+      self.train_loss = tf.keras.metrics.Sum('train_loss', dtype=tf.float32)
+      self.grad_norm = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
       if self.one_hot:
         self.train_accuracy = tf.keras.metrics.CategoricalAccuracy(
             'train_accuracy', dtype=tf.float32)
@@ -248,6 +249,8 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
       self.train_loss.reset_states()
     if self.train_accuracy:
       self.train_accuracy.reset_states()
+    if self.grad_norm:
+      self.grad_norm.reset_states()
 
     self._epoch_begin()
     if self.trace_start_step:
@@ -304,7 +307,7 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
       # Unscale the grads
       if self.flags_obj.dtype == 'fp16':
         grads = self.optimizer.get_unscaled_gradients(grads)
-      
+
       return logits, loss, grads
 
     def _maybe_apply_grads_and_clear(distribution):
@@ -320,6 +323,8 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
           replica_accum_grad = tf.cast(replica_accum_grad, var.dtype)
           replica_accum_grads.append(replica_accum_grad)
 
+        if self.grad_norm:
+          self.grad_norm.update_state(sum(tf.sqrt(tf.reduce_sum(x * x)) for x in replica_accum_grads))
         self.optimizer.apply_gradients(
             zip(replica_accum_grads, self.training_vars))
         for accum_grad in self.accum_grads:
@@ -366,10 +371,16 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
   def train_loop_end(self):
     """See base class."""
     metrics = {}
+    step = self.time_callback.global_steps
     if self.train_loss:
       metrics['train_loss'] = self.train_loss.result()
+      tf.summary.scalar('train_loss', data=self.train_loss.result(), step=step)
     if self.train_accuracy:
       metrics['train_accuracy'] = self.train_accuracy.result()
+      tf.summary.scalar('train_accuracy', data=self.train_accuracy.result(), step=step)
+    if self.grad_norm:
+      metrics['grad_norm'] = self.grad_norm.result()
+      tf.summary.scalar('grad_norm', data=self.grad_norm.result(), step=step)
 
     self.time_callback.on_batch_end(self.epoch_helper.batch_index - 1)
 

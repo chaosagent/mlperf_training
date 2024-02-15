@@ -268,7 +268,7 @@ def get_callbacks(
 
   if FLAGS.enable_tensorboard:
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
-        log_dir=FLAGS.model_dir)
+        log_dir=FLAGS.model_dir, update_freq='batch', histogram_freq=1)
     callbacks.append(tensorboard_callback)
 
   if FLAGS.profile_steps:

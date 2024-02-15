@@ -332,6 +332,7 @@ def input_fn(is_training,
   """
   if filenames is None:
     filenames = get_filenames(is_training, data_dir)
+  print('num_files', is_training, data_dir, batch_size, len(filenames))
   dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
   if input_context:

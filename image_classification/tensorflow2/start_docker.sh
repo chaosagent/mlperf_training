@@ -1,0 +1,1 @@
+sudo docker run -u $(id -u):$(id -g) -it --rm --runtime=nvidia -v /home/ubuntu/tinygrad/datasets/imagenet:/data -v /home/ubuntu/mlperf_training/image_classification:/tf_code tensorflow/tensorflow:2.5.1-gpu bash
