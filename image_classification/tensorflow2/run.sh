@@ -9,9 +9,9 @@ python3 ./resnet_ctl_imagenet_main.py \
 --noenable_device_warmup \
 --enable_eager \
 --noenable_xla \
---epochs_between_evals=4 \
+--epochs_between_evals=1 \
 --noeval_dataset_cache \
---eval_offset_epochs=2 \
+--eval_offset_epochs=0 \
 --eval_prefetch_batchs=192 \
 --label_smoothing=0.1 \
 --lars_epsilon=0 \
@@ -31,7 +31,7 @@ python3 ./resnet_ctl_imagenet_main.py \
 --notf_data_experimental_slack \
 --tf_gpu_thread_mode=gpu_private \
 --notrace_warmup \
---train_epochs=41 \
+--train_epochs=45 \
 --notraining_dataset_cache \
 --training_prefetch_batchs=128 \
 --nouse_synthetic_data \
