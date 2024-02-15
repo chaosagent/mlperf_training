@@ -378,7 +378,7 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
     if self.train_accuracy:
       metrics['train_accuracy'] = self.train_accuracy.result()
       tf.summary.scalar('train_accuracy', data=self.train_accuracy.result(), step=step)
-    if self.grad_norm:
+    if self.grad_norm and self.grad_norm.result() > 0.0:
       metrics['grad_norm'] = self.grad_norm.result()
       tf.summary.scalar('grad_norm', data=self.grad_norm.result(), step=step)
 
