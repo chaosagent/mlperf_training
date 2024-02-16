@@ -138,7 +138,7 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
 
     if flags_obj.report_accuracy_metrics:
       self.train_loss = tf.keras.metrics.Sum('train_loss', dtype=tf.float32)
-      self.grad_norm = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
+      self.grad_norm = tf.keras.metrics.Mean('grad_norm', dtype=tf.float32)
       if self.one_hot:
         self.train_accuracy = tf.keras.metrics.CategoricalAccuracy(
             'train_accuracy', dtype=tf.float32)
@@ -374,13 +374,16 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
     step = self.time_callback.global_steps
     if self.train_loss:
       metrics['train_loss'] = self.train_loss.result()
-      tf.summary.scalar('train_loss', data=self.train_loss.result(), step=step)
+      with self.time_callback.summary_writer.as_default():
+        tf.summary.scalar('train_loss', data=self.train_loss.result(), step=step)
     if self.train_accuracy:
       metrics['train_accuracy'] = self.train_accuracy.result()
-      tf.summary.scalar('train_accuracy', data=self.train_accuracy.result(), step=step)
+      with self.time_callback.summary_writer.as_default():
+        tf.summary.scalar('train_accuracy', data=self.train_accuracy.result(), step=step)
     if self.grad_norm and self.grad_norm.result() > 0.0:
       metrics['grad_norm'] = self.grad_norm.result()
-      tf.summary.scalar('grad_norm', data=self.grad_norm.result(), step=step)
+      with self.time_callback.summary_writer.as_default():
+        tf.summary.scalar('grad_norm', data=self.grad_norm.result(), step=step)
 
     self.time_callback.on_batch_end(self.epoch_helper.batch_index - 1)
 
@@ -480,10 +483,15 @@ class ResnetRunnable(standard_runnable.StandardRunnableWithWarmup):
           })
 
     results = {}
+    step = self.time_callback.global_steps
     if self.test_loss:
       results['test_loss'] = self.test_loss.result()
+      with self.time_callback.summary_writer.as_default():
+        tf.summary.scalar('test_loss', data=self.test_loss.result(), step=step)
     if self.test_accuracy:
       results['test_accuracy'] = self.test_accuracy.result()
+      with self.time_callback.summary_writer.as_default():
+        tf.summary.scalar('test_accuracy', data=self.test_accuracy.result(), step=step)
     results['continue_training'] = continue_training
     return results
 
